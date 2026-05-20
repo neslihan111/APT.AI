@@ -1,0 +1,22 @@
+{
+    "venvPath": "backend",
+    "venv": ".venv",
+
+    "executionEnvironments": [
+        {
+            "root": "backend",
+            "extraPaths": [
+                "backend"
+            ]
+        }
+    ],
+
+    "include": [
+        "backend/app"
+    ],
+
+        "exclude": [
+         "**/node_modules", "**/__pycache__", "**/.*"
+]
+
+}
