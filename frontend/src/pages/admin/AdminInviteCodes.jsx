@@ -11,7 +11,7 @@ export const AdminInviteCodes = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [showForm, setShowForm] = useState(false);
-    const [formData, setFormData] = useState({ code: '' });
+    const [formData, setFormData] = useState({ code: '', expiresAt: '' });
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => { loadCodes(); }, []);
@@ -34,9 +34,10 @@ export const AdminInviteCodes = () => {
         try {
             await api.post('/admin/invite-codes', {
                 code: formData.code.toUpperCase(),
+                expires_at: formData.expiresAt ? new Date(formData.expiresAt).toISOString() : null,
             });
             setSuccess('Davet kodu oluşturuldu');
-            setFormData({ code: '' });
+            setFormData({ code: '', expiresAt: '' });
             setShowForm(false);
             loadCodes();
         } catch (err) {
@@ -60,22 +61,38 @@ export const AdminInviteCodes = () => {
         const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
         let code = '';
         for (let i = 0; i < 8; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
-        setFormData({ code });
+        setFormData({ ...formData, code });
+    };
+
+    const handleCopy = (code) => {
+        navigator.clipboard.writeText(code);
+        setSuccess(`"${code}" kodu panoya kopyalandı!`);
+        setTimeout(() => setSuccess(''), 3000);
     };
 
     const columns = [
         { header: 'Kod', render: (r) => (
-            <span style={{ fontFamily: 'monospace', fontWeight: 600, fontSize: '1rem', letterSpacing: '1px' }}>
-                {r.code}
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ fontFamily: 'monospace', fontWeight: 600, fontSize: '1rem', letterSpacing: '1px' }}>
+                    {r.code}
+                </span>
+                <Button className="btn-outline" style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', border: '1px solid #cbd5e1' }}
+                    onClick={() => handleCopy(r.code)}>
+                    📋 Kopyala
+                </Button>
+            </div>
         )},
-        { header: 'Durum', render: (r) => r.is_active ?
-            <span style={{ color: '#15803d', fontWeight: 500 }}>✅ Aktif</span> :
-            <span style={{ color: '#b91c1c', fontWeight: 500 }}>❌ Pasif</span>
-        },
+        { header: 'Durum', render: (r) => {
+            const isExpired = r.expires_at && new Date(r.expires_at) < new Date();
+            if (isExpired) return <span style={{ color: '#b91c1c', fontWeight: 500 }}>⏳ Süresi Doldu</span>;
+            return r.is_active ?
+                <span style={{ color: '#15803d', fontWeight: 500 }}>✅ Aktif</span> :
+                <span style={{ color: '#b91c1c', fontWeight: 500 }}>❌ Pasif</span>;
+        }},
         { header: 'Oluşturulma', render: (r) => r.created_at ? new Date(r.created_at).toLocaleDateString('tr-TR') : '-' },
+        { header: 'Son Kullanma', render: (r) => r.expires_at ? new Date(r.expires_at).toLocaleString('tr-TR') : 'Süresiz' },
         {
-            header: 'İşlem', render: (r) => r.is_active ? (
+            header: 'İşlem', render: (r) => r.is_active && (!r.expires_at || new Date(r.expires_at) >= new Date()) ? (
                 <Button className="btn-outline" style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
                     onClick={() => handleDeactivate(r.id)}>
                     Devre Dışı Bırak
@@ -115,16 +132,23 @@ export const AdminInviteCodes = () => {
                 <Card className="mb-6">
                     <h3 style={{ marginBottom: '1rem' }}>Yeni Davet Kodu</h3>
                     <form onSubmit={handleCreate}>
-                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
-                            <div style={{ flex: 1 }}>
-                                <Input label="Davet Kodu" placeholder="Ör: GREENPARK2026"
-                                    value={formData.code}
-                                    onChange={e => setFormData({ code: e.target.value.toUpperCase() })} required />
+                        <div style={{ display: 'flex', gap: '1rem', flexDirection: 'column', marginBottom: '1rem' }}>
+                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
+                                <div style={{ flex: 1 }}>
+                                    <Input label="Davet Kodu *" placeholder="Ör: GREENPARK2026"
+                                        value={formData.code}
+                                        onChange={e => setFormData({ ...formData, code: e.target.value.toUpperCase() })} required />
+                                </div>
+                                <Button type="button" className="btn-outline" onClick={generateRandomCode}
+                                    style={{ marginBottom: '1rem', whiteSpace: 'nowrap' }}>
+                                    🎲 Rastgele
+                                </Button>
                             </div>
-                            <Button type="button" className="btn-outline" onClick={generateRandomCode}
-                                style={{ marginBottom: '1rem', whiteSpace: 'nowrap' }}>
-                                🎲 Rastgele
-                            </Button>
+                            <div>
+                                <Input label="Son Kullanma Tarihi (Opsiyonel)" type="datetime-local"
+                                    value={formData.expiresAt}
+                                    onChange={e => setFormData({ ...formData, expiresAt: e.target.value })} />
+                            </div>
                         </div>
                         <Button type="submit" className="btn-primary" disabled={submitting}>
                             {submitting ? 'Oluşturuluyor...' : 'Oluştur'}

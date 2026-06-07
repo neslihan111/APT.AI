@@ -14,3 +14,8 @@ export const addDue = async (data) => {
     const res = await api.post('/dues', data);
     return res.data;
 };
+
+export const updateDueStatus = async (dueId, status) => {
+    const res = await api.put(`/dues/${dueId}/status`, { status });
+    return res.data;
+};

@@ -8,6 +8,8 @@ from app.models.site import Site
 from app.models.building import Building
 from app.models.apartment import Apartment
 from app.models.site_invite_code import SiteInviteCode
+from app.models.complaint import Complaint
+from app.models.due import Due
 from app.schemas.admin import AdminTransferRequest
 from app.schemas.site import SiteCreate, SiteResponse, SiteWithAdmin
 from app.schemas.building import (
@@ -121,10 +123,51 @@ def get_current_site(db: Session = Depends(get_db), current_admin: User = Depend
         raise HTTPException(status_code=500, detail=f"Site bilgisi yüklenirken hata: {str(e)}")
 
 
+@router.get("/stats")
+def get_admin_stats(db: Session = Depends(get_db), current_admin: User = Depends(get_current_admin)):
+    """Get site statistics for admin dashboard."""
+    try:
+        if not current_admin.site_id:
+            return {
+                "total_residents": 0,
+                "total_buildings": 0,
+                "total_apartments": 0,
+                "total_complaints": 0,
+                "pending_complaints": 0,
+                "total_dues": 0
+            }
+        
+        total_residents = db.query(User).filter(User.site_id == current_admin.site_id, User.role == "resident").count()
+        total_buildings = db.query(Building).filter(Building.site_id == current_admin.site_id).count()
+        total_apartments = db.query(Apartment).join(Building).filter(Building.site_id == current_admin.site_id).count()
+        total_complaints = db.query(Complaint).filter(Complaint.site_id == current_admin.site_id).count()
+        pending_complaints = db.query(Complaint).filter(Complaint.site_id == current_admin.site_id, Complaint.status == "pending").count()
+        total_dues = db.query(Due).filter(Due.site_id == current_admin.site_id).count()
+        
+        return {
+            "total_residents": total_residents,
+            "total_buildings": total_buildings,
+            "total_apartments": total_apartments,
+            "total_complaints": total_complaints,
+            "pending_complaints": pending_complaints,
+            "total_dues": total_dues
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"İstatistikler yüklenirken hata: {str(e)}")
+
+
 @router.post("/site", response_model=SiteResponse)
 def create_site(data: SiteCreate, db: Session = Depends(get_db), current_admin: User = Depends(get_current_admin)):
     """Create a new site and assign the current admin to it."""
     try:
+        # Zaten bir siteye sahipse engelle
+        if current_admin.site_id is not None:
+            raise HTTPException(status_code=400, detail="Zaten yönettiğiniz bir site bulunuyor. İkinci bir site oluşturamazsınız.")
+            
+        existing_site = db.query(Site).filter(Site.current_admin_id == current_admin.id).first()
+        if existing_site:
+            raise HTTPException(status_code=400, detail="Zaten yönettiğiniz bir site bulunuyor. İkinci bir site oluşturamazsınız.")
+
         new_site = Site(
             name=data.name, address=data.address, city=data.city,
             current_admin_id=current_admin.id,
@@ -136,6 +179,8 @@ def create_site(data: SiteCreate, db: Session = Depends(get_db), current_admin: 
         db.commit()
         db.refresh(new_site)
         return new_site
+    except HTTPException:
+        raise
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Site oluşturulurken hata: {str(e)}")
@@ -286,14 +331,15 @@ def create_invite_code(data: InviteCodeCreate, db: Session = Depends(get_db), cu
         if not current_admin.site_id:
             raise HTTPException(status_code=400, detail="Önce bir site oluşturmalısınız")
 
+        clean_code = data.code.strip().upper()
         # Check uniqueness
-        existing = db.query(SiteInviteCode).filter(SiteInviteCode.code == data.code).first()
+        existing = db.query(SiteInviteCode).filter(SiteInviteCode.code == clean_code).first()
         if existing:
             raise HTTPException(status_code=400, detail="Bu kod zaten kullanımda")
 
         new_code = SiteInviteCode(
             site_id=current_admin.site_id,
-            code=data.code.upper(),
+            code=clean_code,
             expires_at=data.expires_at,
         )
         db.add(new_code)

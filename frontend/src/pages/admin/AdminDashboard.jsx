@@ -7,38 +7,70 @@ export const AdminDashboard = () => {
     const { user } = useAuth();
     const [siteInfo, setSiteInfo] = useState(null);
     const [stats, setStats] = useState({
-        totalComplaints: 0, openComplaints: 0,
-        totalResidents: 0, totalBuildings: 0,
+        totalResidents: 0,
+        totalBuildings: 0,
+        totalApartments: 0,
+        totalComplaints: 0,
+        pendingComplaints: 0,
+        totalDues: 0,
+    });
+    const [insights, setInsights] = useState({
+        summary: '',
+        repeating_issues: [],
+        suggestions: [],
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
     useEffect(() => {
         const loadDashboardData = async () => {
+            setLoading(true);
+            setError('');
+            let siteLoaded = false;
+            let statsLoaded = false;
+
             try {
                 const siteRes = await api.get('/admin/site');
                 setSiteInfo(siteRes.data);
-
-                const [usersRes, complaintsRes] = await Promise.all([
-                    api.get('/auth/users').catch(() => ({ data: [] })),
-                    api.get('/complaints').catch(() => ({ data: [] })),
-                ]);
-
-                const users = usersRes.data || [];
-                const complaints = complaintsRes.data || [];
-
-                setStats({
-                    totalComplaints: complaints.length,
-                    openComplaints: complaints.filter(c => c.status === 'pending' || c.status === 'open').length,
-                    totalResidents: users.filter(u => u.role === 'resident').length,
-                    totalBuildings: siteRes.data?.building_count || 0,
-                });
+                // console.log("ADMIN SITE RESPONSE:", siteRes.data);
+                siteLoaded = true;
             } catch (err) {
-                setError('Dashboard verisi yüklenemedi');
-                console.error('Dashboard verisi yüklenemedi:', err);
-            } finally {
-                setLoading(false);
+                console.error("Site bilgisi yüklenemedi:", err);
             }
+
+            try {
+                const statsRes = await api.get('/admin/stats');
+                const s = statsRes.data;
+                // console.log("ADMIN STATS RESPONSE:", s);
+                setStats({
+                    totalResidents: s.total_residents ?? 0,
+                    totalBuildings: s.total_buildings ?? 0,
+                    totalApartments: s.total_apartments ?? 0,
+                    totalComplaints: s.total_complaints ?? 0,
+                    pendingComplaints: s.pending_complaints ?? 0,
+                    totalDues: s.total_dues ?? 0,
+                });
+                statsLoaded = true;
+            } catch (err) {
+                console.error("Stats yüklenemedi:", err);
+            }
+
+            try {
+                const insightsRes = await api.get('/ai/dashboard-insights');
+                setInsights(insightsRes.data);
+            } catch (err) {
+                console.error("AI insights yüklenemedi:", err);
+                setInsights({
+                    summary: 'AI analiz raporu yüklenemedi.',
+                    repeating_issues: [],
+                    suggestions: [],
+                });
+            }
+
+            if (!siteLoaded && !statsLoaded) {
+                setError('Dashboard verileri yüklenemedi');
+            }
+            setLoading(false);
         };
         loadDashboardData();
     }, []);
@@ -97,33 +129,60 @@ export const AdminDashboard = () => {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-4 gap-6 mb-6" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                <Card title="Toplam Şikayet">
-                    <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stats.totalComplaints}</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                <Card title="Toplam Sakin">
+                    <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>{stats.totalResidents}</p>
                 </Card>
-                <Card title="Açık Şikayetler">
-                    <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: stats.openComplaints > 0 ? 'var(--warning)' : 'inherit' }}>
-                        {stats.openComplaints}
+                <Card title="Toplam Bina">
+                    <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>{stats.totalBuildings}</p>
+                </Card>
+                <Card title="Toplam Daire">
+                    <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>{stats.totalApartments}</p>
+                </Card>
+                <Card title="Toplam Şikayet">
+                    <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>{stats.totalComplaints}</p>
+                </Card>
+                <Card title="Bekleyen Şikayet">
+                    <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0, color: stats.pendingComplaints > 0 ? '#b91c1c' : 'inherit' }}>
+                        {stats.pendingComplaints}
                     </p>
                 </Card>
-                <Card title="Toplam Sakin">
-                    <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stats.totalResidents}</p>
-                </Card>
-                <Card title="Bina / Blok">
-                    <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stats.totalBuildings}</p>
+                <Card title="Aidat Sayısı">
+                    <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>{stats.totalDues}</p>
                 </Card>
             </div>
 
-            <h2 className="mb-4">AI Hızlı Özet</h2>
+            <h2 className="mb-4">AI Haftalık Analiz ve Çözüm Önerileri</h2>
             <Card className="mb-6" style={{ backgroundColor: '#f0fdf4', borderColor: '#bbf7d0' }}>
-                <div className="flex items-start gap-4">
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
                     <div style={{ fontSize: '2rem' }}>🤖</div>
-                    <div>
-                        <h3 className="mb-2" style={{ color: '#166534' }}>Haftalık Durum Raporu</h3>
-                        <p style={{ color: '#15803d' }}>
-                            Bu hafta otopark ile ilgili şikayetlerde artış gözlemleniyor.
-                            Genel aidat ödeme oranı %85.
+                    <div style={{ flex: 1 }}>
+                        <h3 className="mb-2" style={{ color: '#166534', margin: '0 0 0.5rem 0' }}>Yönetici AI Raporu</h3>
+                        <p style={{ color: '#15803d', fontWeight: 500, marginBottom: '1rem', lineHeight: '1.5' }}>
+                            {insights.summary || 'Şikayet verisi bulunmadığından haftalık AI analiz raporu oluşturulamadı.'}
                         </p>
+                        
+                        {insights.repeating_issues && insights.repeating_issues.length > 0 && (
+                            <div style={{ marginBottom: '1rem' }}>
+                                <h4 style={{ color: '#166534', fontSize: '0.9rem', marginBottom: '0.25rem', fontWeight: '600' }}>🔄 Tekrar Eden Sorunlar:</h4>
+                                <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#15803d', fontSize: '0.85rem' }}>
+                                    {insights.repeating_issues.map((issue, idx) => (
+                                        <li key={idx} style={{ marginBottom: '0.25rem' }}>{issue}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+
+                        {insights.suggestions && insights.suggestions.length > 0 && (
+                            <div>
+                                <h4 style={{ color: '#166534', fontSize: '0.9rem', marginBottom: '0.25rem', fontWeight: '600' }}>💡 Çözüm Önerileri:</h4>
+                                <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#15803d', fontSize: '0.85rem' }}>
+                                    {insights.suggestions.map((suggestion, idx) => (
+                                        <li key={idx} style={{ marginBottom: '0.25rem' }}>{suggestion}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
                     </div>
                 </div>
             </Card>

@@ -22,6 +22,7 @@ class ComplaintResponse(ComplaintBase):
     category: Optional[str] = None
     priority: Optional[str] = None
     ai_summary: Optional[str] = None
+    suggestion: Optional[str] = None
     created_at: datetime
 
     model_config = {

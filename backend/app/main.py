@@ -36,6 +36,22 @@ async def lifespan(app: FastAPI):
         # Create tables (including new ones: buildings, apartments, site_invite_codes)
         Base.metadata.create_all(bind=engine)
         print("Tablolar başarıyla kontrol edildi/oluşturuldu.")
+
+        # Check and add 'suggestion' column to 'complaints' if it's missing
+        try:
+            with engine.begin() as conn:
+                conn.execute(text("""
+                IF NOT EXISTS (
+                    SELECT * FROM sys.columns 
+                    WHERE object_id = OBJECT_ID('complaints') AND name = 'suggestion'
+                )
+                BEGIN
+                    ALTER TABLE complaints ADD suggestion NVARCHAR(MAX) NULL;
+                END
+                """))
+            print("Veritabanı 'suggestion' sütunu kontrol edildi/eklendi.")
+        except Exception as column_err:
+            print("Uyarı: 'suggestion' sütunu eklenirken hata oluştu (zaten mevcut olabilir):", column_err)
     except Exception as e:
         print("Kritik Hata: Veritabanına bağlanılamadı!", e)
         sys.exit(1)

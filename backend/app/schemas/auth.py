@@ -22,11 +22,39 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 
 
+class SiteInfo(BaseModel):
+    id: int
+    name: str
+    
+    class Config:
+        from_attributes = True
+
+class BuildingInfo(BaseModel):
+    id: int
+    name: str
+    
+    class Config:
+        from_attributes = True
+
+class ApartmentInfo(BaseModel):
+    id: int
+    apartment_number: str
+    
+    class Config:
+        from_attributes = True
+
 class UserResponse(BaseModel):
     id: int
     full_name: str
     email: EmailStr
     role: str
+    site_id: int | None = None
+    building_id: int | None = None
+    apartment_id: int | None = None
+    phone: str | None = None
+    site: SiteInfo | None = None
+    building: BuildingInfo | None = None
+    apartment: ApartmentInfo | None = None
 
     model_config = {
         "from_attributes": True

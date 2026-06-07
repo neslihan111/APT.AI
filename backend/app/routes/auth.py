@@ -26,8 +26,9 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
         # Resolve site from invite code
         site_id = None
         if data.site_code:
+            clean_code = data.site_code.strip().upper()
             invite = db.query(SiteInviteCode).filter(
-                SiteInviteCode.code == data.site_code,
+                SiteInviteCode.code == clean_code,
                 SiteInviteCode.is_active == True,
             ).first()
 
@@ -176,7 +177,7 @@ def get_building_apartments_public(building_id: int, db: Session = Depends(get_d
 @router.post("/validate-invite-code")
 def validate_invite_code(data: dict, db: Session = Depends(get_db)):
     """Public endpoint: validate an invite code and return site info."""
-    code = data.get("code", "").strip()
+    code = data.get("code", "").strip().upper()
     if not code:
         raise HTTPException(status_code=400, detail="Davet kodu gerekli")
 

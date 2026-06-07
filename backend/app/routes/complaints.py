@@ -28,6 +28,7 @@ def create_complaint(data: ComplaintCreate, db: Session = Depends(get_db), curre
             new_complaint.category = analysis_result.get("category")
             new_complaint.priority = analysis_result.get("priority")
             new_complaint.ai_summary = analysis_result.get("summary")
+            new_complaint.suggestion = analysis_result.get("suggestion")
 
         db.add(new_complaint)
         db.commit()

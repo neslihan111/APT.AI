@@ -16,7 +16,7 @@ MODEL_ID = "gemini-2.0-flash"
 
 def analyze_complaint(title: str, description: str):
     if not client:
-        return {"category": "Diğer", "priority": "medium", "summary": "AI kapalı."}
+        return {"category": "Diğer", "priority": "medium", "summary": "AI kapalı.", "suggestion": "AI kapalı olduğundan çözüm önerisi sunulamıyor."}
 
     prompt = f"""
 Lütfen aşağıdaki apartman/site şikayetini analiz et.
@@ -25,7 +25,8 @@ Bana sadece geçerli bir JSON objesi dön. JSON dışında hiçbir metin yazma.
 {{
   "category": "Teknik" | "Güvenlik" | "Temizlik" | "Diğer",
   "priority": "low" | "medium" | "high",
-  "summary": "1-2 cümlelik kısa şikayet özeti"
+  "summary": "1-2 cümlelik kısa şikayet özeti",
+  "suggestion": "Yönetici için bu şikayeti çözmeye yönelik 1-2 cümlelik çözüm önerisi"
 }}
 
 Şikayet Başlığı: {title}
@@ -42,7 +43,7 @@ Bana sadece geçerli bir JSON objesi dön. JSON dışında hiçbir metin yazma.
         return json.loads(text)
     except Exception as e:
         print(f"Gemini Error: {e}")
-        return {"category": "Diğer", "priority": "medium", "summary": "AI analizi yapılamadı."}
+        return {"category": "Diğer", "priority": "medium", "summary": "AI analizi yapılamadı.", "suggestion": "Öneri oluşturulamadı."}
 
 
 def summarize_announcement(content: str):

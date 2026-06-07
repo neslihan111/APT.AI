@@ -12,7 +12,10 @@ router = APIRouter(prefix="/dues", tags=["Dues"])
 @router.get("/my", response_model=List[DueResponse])
 def get_my_dues(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     try:
-        return db.query(Due).filter(Due.user_id == current_user.id).order_by(Due.due_date.desc()).all()
+        query = db.query(Due).filter(Due.user_id == current_user.id)
+        if current_user.site_id:
+            query = query.filter(Due.site_id == current_user.site_id)
+        return query.order_by(Due.due_date.desc()).all()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Aidatlar yüklenirken hata: {str(e)}")
 

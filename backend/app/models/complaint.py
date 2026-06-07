@@ -24,6 +24,7 @@ class Complaint(Base):
     category: Mapped[str | None] = mapped_column(String(100), nullable=True)
     priority: Mapped[str | None] = mapped_column(String(50), nullable=True)
     ai_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    suggestion: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
