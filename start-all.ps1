@@ -17,14 +17,14 @@ Write-Host ""
 
 # Backend'i yeni bir PowerShell penceresinde başlat
 Write-Host "[1/2] Backend başlatılıyor..." -ForegroundColor Cyan
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$projectRoot'; .\start-backend.ps1" -WindowStyle Normal
+Start-Process powershell -ArgumentList "-ExecutionPolicy Bypass", "-NoExit", "-Command", "Set-Location '$projectRoot'; .\start-backend.ps1" -WindowStyle Normal
 
 # Kısa bekleme
 Start-Sleep -Seconds 3
 
 # Frontend'i yeni bir PowerShell penceresinde başlat
 Write-Host "[2/2] Frontend başlatılıyor..." -ForegroundColor Cyan
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$projectRoot'; .\start-frontend.ps1" -WindowStyle Normal
+Start-Process powershell -ArgumentList "-ExecutionPolicy Bypass", "-NoExit", "-Command", "Set-Location '$projectRoot'; .\start-frontend.ps1" -WindowStyle Normal
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Green

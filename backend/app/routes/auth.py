@@ -23,9 +23,24 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
                 detail="Bu e-posta zaten kayıtlı"
             )
 
-        # Resolve site from invite code
         site_id = None
-        if data.site_code:
+        role = "resident"
+
+        if data.register_type == "manager":
+            if not data.site_name or not data.city or not data.address:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Site Adı, Şehir ve Adres bilgileri zorunludur"
+                )
+            role = "pending_admin"
+        else:
+            # Default to resident
+            if not data.site_code:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Apartman sakini kaydı için site davet kodu zorunludur"
+                )
+
             clean_code = data.site_code.strip().upper()
             invite = db.query(SiteInviteCode).filter(
                 SiteInviteCode.code == clean_code,
@@ -38,7 +53,6 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
                     detail="Geçersiz veya süresi dolmuş davet kodu"
                 )
 
-            # Check expiry
             if invite.expires_at and invite.expires_at < datetime.now():
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -47,12 +61,11 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
 
             site_id = invite.site_id
 
-        # SECURITY: Role is hardcoded to "resident" — never trust the client
         new_user = User(
             full_name=data.full_name,
             email=data.email,
             password_hash=hash_password(data.password),
-            role="resident",
+            role=role,
             phone=data.phone,
             site_id=site_id,
             building_id=data.building_id,

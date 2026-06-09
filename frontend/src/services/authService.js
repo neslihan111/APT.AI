@@ -19,16 +19,25 @@ export const login = async (email, password) => {
 };
 
 export const register = async (userData) => {
-    // SECURITY: role is never sent — backend hardcodes it to "resident"
-    const res = await api.post('/auth/register', {
+    const payload = {
+        register_type: userData.registerType || "resident",
         full_name: userData.name,
         email: userData.email,
         password: userData.password,
         phone: userData.phone || null,
-        site_code: userData.siteCode || null,
-        building_id: userData.buildingId ? parseInt(userData.buildingId) : null,
-        apartment_id: userData.apartmentId ? parseInt(userData.apartmentId) : null,
-    });
+    };
+
+    if (payload.register_type === "resident") {
+        payload.site_code = userData.siteCode || null;
+        payload.building_id = userData.buildingId ? parseInt(userData.buildingId) : null;
+        payload.apartment_id = userData.apartmentId ? parseInt(userData.apartmentId) : null;
+    } else {
+        payload.site_name = userData.siteName || null;
+        payload.city = userData.city || null;
+        payload.address = userData.address || null;
+    }
+
+    const res = await api.post('/auth/register', payload);
     return res.data;
 };
 

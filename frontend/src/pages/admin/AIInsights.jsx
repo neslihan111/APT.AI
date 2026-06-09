@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getDashboardInsights } from '../../services/aiService';
 import { Card } from '../../components/ui/Card';
+import { AIChat } from '../../components/ui/AIChat';
 
 export const AIInsights = () => {
+    const navigate = useNavigate();
     const [insights, setInsights] = useState(null);
 
     useEffect(() => {
@@ -38,6 +41,18 @@ export const AIInsights = () => {
                             ))}
                         </ul>
                     </Card>
+                </div>
+
+                <div className="mt-8">
+                    <AIChat 
+                        suggestions={[
+                            "Aidatını ödemeyen var mı?",
+                            "Bekleyen şikayetleri listele",
+                            "En önemli sorun ne?",
+                            "Aidatını ödemeyenlere uyarı gönder"
+                        ]}
+                        onNavigate={(path) => navigate(path)}
+                    />
                 </div>
             </div>
         </div>

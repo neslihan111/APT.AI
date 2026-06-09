@@ -15,6 +15,7 @@ import { Complaints } from './pages/resident/Complaints';
 import { ComplaintNew } from './pages/resident/ComplaintNew';
 import { Dues } from './pages/resident/Dues';
 import { Profile } from './pages/resident/Profile';
+import { AIAssistant } from './pages/resident/AIAssistant';
 
 // Admin Pages
 import { AdminDashboard } from './pages/admin/AdminDashboard';
@@ -45,6 +46,7 @@ function App() {
                         <Route path="/complaints/new" element={<ComplaintNew />} />
                         <Route path="/dues/my" element={<Dues />} />
                         <Route path="/profile" element={<Profile />} />
+                        <Route path="/ai-assistant" element={<AIAssistant />} />
 
                         {/* Admin Routes */}
                         <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><Outlet /></ProtectedRoute>}>

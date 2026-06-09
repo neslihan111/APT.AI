@@ -1,9 +1,14 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { getComplaints, updateComplaintStatus } from '../../services/complaintService';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 
 export const AdminComplaints = () => {
+    const [searchParams, setSearchParams] = useSearchParams();
+    const initialStatus = searchParams.get('status') || 'all';
+    const [filterStatus, setFilterStatus] = useState(initialStatus);
+
     const [complaints, setComplaints] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -40,14 +45,43 @@ export const AdminComplaints = () => {
 
     if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Yükleniyor...</div>;
 
+    const filteredComplaints = filterStatus === 'all' 
+        ? complaints 
+        : complaints.filter(c => c.status === filterStatus);
+
     return (
         <div>
-            <h1 className="mb-6">Sakin Şikayetleri</h1>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <h1 style={{ margin: 0 }}>Sakin Şikayetleri</h1>
+                
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-muted)' }}>Filtrele:</span>
+                    <select
+                        className="input-field"
+                        style={{ width: 'auto', padding: '0.4rem 2rem 0.4rem 0.75rem' }}
+                        value={filterStatus}
+                        onChange={(e) => {
+                            setFilterStatus(e.target.value);
+                            if (e.target.value === 'all') {
+                                searchParams.delete('status');
+                                setSearchParams(searchParams);
+                            } else {
+                                setSearchParams({ status: e.target.value });
+                            }
+                        }}
+                    >
+                        <option value="all">Tümü</option>
+                        <option value="pending">⏳ Bekleyenler</option>
+                        <option value="in_progress">🚧 İşlemde</option>
+                        <option value="resolved">✅ Çözülenler</option>
+                    </select>
+                </div>
+            </div>
 
             {error && <div style={{ backgroundColor: '#fee2e2', color: '#b91c1c', padding: '0.75rem 1rem', borderRadius: '6px', marginBottom: '1rem', fontSize: '0.875rem' }}>{error}</div>}
             {success && <div style={{ backgroundColor: '#dcfce7', color: '#15803d', padding: '0.75rem 1rem', borderRadius: '6px', marginBottom: '1rem', fontSize: '0.875rem' }}>{success}</div>}
 
-            {complaints.length === 0 ? (
+            {filteredComplaints.length === 0 ? (
                 <Card>
                     <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem 0' }}>
                         Henüz herhangi bir sakin şikayeti bulunmuyor.
@@ -55,7 +89,7 @@ export const AdminComplaints = () => {
                 </Card>
             ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    {complaints.map(c => (
+                    {filteredComplaints.map(c => (
                         <Card key={c.id}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
                                 <div>
@@ -72,6 +106,7 @@ export const AdminComplaints = () => {
                                         style={{ padding: '0.35rem 0.5rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem', backgroundColor: '#fff', fontWeight: 500 }}
                                     >
                                         <option value="pending">⏳ Beklemede</option>
+                                        <option value="in_progress">🚧 İşlemde</option>
                                         <option value="resolved">✅ Çözüldü</option>
                                     </select>
                                 </div>

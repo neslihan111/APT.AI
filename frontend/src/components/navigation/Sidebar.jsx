@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Home, Bell, AlertTriangle, CreditCard, User, Users, Activity, LogOut, Building2, KeyRound, ArrowRightLeft } from 'lucide-react';
+import { Home, Bell, AlertTriangle, CreditCard, User, Users, Activity, LogOut, Building2, KeyRound, ArrowRightLeft, Bot } from 'lucide-react';
 import './navigation.css';
 
 export const Sidebar = () => {
@@ -8,6 +8,7 @@ export const Sidebar = () => {
 
     const residentLinks = [
         { to: "/dashboard", label: "Dashboard", icon: <Home size={20} /> },
+        { to: "/ai-assistant", label: "AI Asistan", icon: <Bot size={20} /> },
         { to: "/announcements", label: "Duyurular", icon: <Bell size={20} /> },
         { to: "/complaints/new", label: "Şikayet Oluştur", icon: <AlertTriangle size={20} /> },
         { to: "/complaints/my", label: "Şikayetlerim", icon: <AlertTriangle size={20} /> },

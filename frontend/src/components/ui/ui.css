@@ -27,11 +27,26 @@
 .input-field:focus { border-color: var(--primary); }
 
 .card {
-    background-color: var(--surface);
+    background-color: var(--card-bg);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: 12px;
     padding: 1.5rem;
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.interactive-card {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.interactive-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.interactive-card:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
 }
 .card-title { margin-bottom: 1rem; font-size: 1.25rem; font-weight: 600; }
 

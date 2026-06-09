@@ -1,18 +1,30 @@
 # Python
 backend/.venv/
+.venv/
 __pycache__/
 *.pyc
 
 # Environment
 backend/.env
+mobile/.env
 .env
 
 # Node
 frontend/node_modules/
 frontend/dist/
 
-# VS Code
+# VS Code & IDEs
 .vscode/
+.idea/
+*.iml
+
+# Flutter / Dart
+mobile/.dart_tool/
+mobile/build/
+
+# Project Specific
+brain/
+test_assistant.py
 
 # Logs
 *.log

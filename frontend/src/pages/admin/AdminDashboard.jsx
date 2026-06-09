@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
@@ -21,6 +22,18 @@ export const AdminDashboard = () => {
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const navigate = useNavigate();
+
+    const handleCardClick = (path) => {
+        navigate(path);
+    };
+
+    const handleKeyDown = (e, path) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            navigate(path);
+        }
+    };
 
     useEffect(() => {
         const loadDashboardData = async () => {
@@ -130,24 +143,66 @@ export const AdminDashboard = () => {
 
             {/* Stats */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
-                <Card title="Toplam Sakin">
+                <Card 
+                    title="Toplam Sakin" 
+                    className="interactive-card" 
+                    onClick={() => handleCardClick('/admin/users')}
+                    onKeyDown={(e) => handleKeyDown(e, '/admin/users')}
+                    role="button"
+                    tabIndex={0}
+                >
                     <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>{stats.totalResidents}</p>
                 </Card>
-                <Card title="Toplam Bina">
+                <Card 
+                    title="Toplam Bina" 
+                    className="interactive-card" 
+                    onClick={() => handleCardClick('/admin/buildings')}
+                    onKeyDown={(e) => handleKeyDown(e, '/admin/buildings')}
+                    role="button"
+                    tabIndex={0}
+                >
                     <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>{stats.totalBuildings}</p>
                 </Card>
-                <Card title="Toplam Daire">
+                <Card 
+                    title="Toplam Daire" 
+                    className="interactive-card" 
+                    onClick={() => handleCardClick('/admin/buildings')}
+                    onKeyDown={(e) => handleKeyDown(e, '/admin/buildings')}
+                    role="button"
+                    tabIndex={0}
+                >
                     <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>{stats.totalApartments}</p>
                 </Card>
-                <Card title="Toplam Şikayet">
+                <Card 
+                    title="Toplam Şikayet" 
+                    className="interactive-card" 
+                    onClick={() => handleCardClick('/admin/complaints')}
+                    onKeyDown={(e) => handleKeyDown(e, '/admin/complaints')}
+                    role="button"
+                    tabIndex={0}
+                >
                     <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>{stats.totalComplaints}</p>
                 </Card>
-                <Card title="Bekleyen Şikayet">
+                <Card 
+                    title="Bekleyen Şikayet" 
+                    className="interactive-card" 
+                    onClick={() => handleCardClick('/admin/complaints?status=pending')}
+                    onKeyDown={(e) => handleKeyDown(e, '/admin/complaints?status=pending')}
+                    role="button"
+                    tabIndex={0}
+                >
                     <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0, color: stats.pendingComplaints > 0 ? '#b91c1c' : 'inherit' }}>
                         {stats.pendingComplaints}
                     </p>
                 </Card>
-                <Card title="Aidat Sayısı">
+                <Card 
+                    title="Aidat Sayısı" 
+                    className="interactive-card" 
+                    onClick={() => handleCardClick('/admin/dues')}
+                    onKeyDown={(e) => handleKeyDown(e, '/admin/dues')}
+                    role="button"
+                    tabIndex={0}
+                >
                     <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: 0 }}>{stats.totalDues}</p>
                 </Card>
             </div>

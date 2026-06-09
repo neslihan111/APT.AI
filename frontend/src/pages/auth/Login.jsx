@@ -19,11 +19,15 @@ export const Login = () => {
         setLoading(true);
         try {
             const res = await login(email, password);
+            if (res.user.role === 'pending_admin') {
+                import('../../services/authService').then(m => m.logout());
+                throw new Error("Hesabınız henüz onay bekliyor. Onaylandıktan sonra panele erişebilirsiniz.");
+            }
             authLogin(res.user, res.token);
             if (res.user.role === 'admin') navigate('/admin/dashboard');
             else navigate('/dashboard');
         } catch (error) {
-            const message = error.response?.data?.detail || 'Giriş başarısız. Lütfen bilgilerinizi kontrol edin.';
+            const message = error.response?.data?.detail || error.message || 'Giriş başarısız. Lütfen bilgilerinizi kontrol edin.';
             setError(message);
         } finally {
             setLoading(false);

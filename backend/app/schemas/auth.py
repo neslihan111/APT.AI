@@ -2,6 +2,7 @@ from pydantic import BaseModel, EmailStr
 
 
 class RegisterRequest(BaseModel):
+    register_type: str = "resident"  # "resident" or "manager"
     full_name: str
     email: EmailStr
     password: str
@@ -10,6 +11,11 @@ class RegisterRequest(BaseModel):
     building_id: int | None = None
     apartment_id: int | None = None
     phone: str | None = None
+    
+    # Manager fields
+    site_name: str | None = None
+    city: str | None = None
+    address: str | None = None
 
 
 class LoginRequest(BaseModel):
