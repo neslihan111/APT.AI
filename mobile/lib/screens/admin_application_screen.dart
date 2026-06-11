@@ -50,7 +50,7 @@ class _AdminApplicationScreenState extends State<AdminApplicationScreen> {
       if (success) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Yönetici başvurunuz başarıyla alındı! Onay bekliyor.")),
+          const SnackBar(content: Text("Yönetici başvurunuz başarıyla gönderildi. Onay süreciniz başlatıldı.")),
         );
         widget.onSubmitSuccess();
       }

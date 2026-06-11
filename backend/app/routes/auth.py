@@ -25,6 +25,7 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
 
         site_id = None
         role = "resident"
+        new_site = None
 
         if data.register_type == "manager":
             if not data.site_name or not data.city or not data.address:
@@ -33,6 +34,16 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
                     detail="Site Adı, Şehir ve Adres bilgileri zorunludur"
                 )
             role = "pending_admin"
+            
+            from app.models.site import Site
+            new_site = Site(
+                name=data.site_name,
+                city=data.city,
+                address=data.address,
+            )
+            db.add(new_site)
+            db.flush()
+            site_id = new_site.id
         else:
             # Default to resident
             if not data.site_code:
@@ -73,6 +84,11 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
         )
 
         db.add(new_user)
+        db.flush()
+        
+        if new_site is not None:
+            new_site.current_admin_id = new_user.id
+
         db.commit()
         db.refresh(new_user)
 

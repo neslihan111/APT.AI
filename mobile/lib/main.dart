@@ -39,6 +39,7 @@ class _MyAppState extends State<MyApp> {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      debugShowCheckedModeBanner: false,
       home: MainAppWrapper(
         isDarkMode: _isDarkMode,
         onToggleTheme: _toggleTheme,
@@ -50,7 +51,7 @@ class _MyAppState extends State<MyApp> {
               onNavigateToLogin: () => Navigator.of(context).pushReplacementNamed('/login'),
             ),
         '/apply-admin': (context) => AdminApplicationScreen(
-              onSubmitSuccess: () => Navigator.of(context).pushReplacementNamed('/login'),
+              onSubmitSuccess: () => Navigator.of(context).pop(),
             ),
       },
     );

@@ -7,6 +7,7 @@ import { api } from '../../services/api';
 export const AdminDashboard = () => {
     const { user } = useAuth();
     const [siteInfo, setSiteInfo] = useState(null);
+    const [pendingApps, setPendingApps] = useState([]);
     const [stats, setStats] = useState({
         totalResidents: 0,
         totalBuildings: 0,
@@ -35,6 +36,34 @@ export const AdminDashboard = () => {
         }
     };
 
+    const loadPendingApplications = async () => {
+        try {
+            const res = await api.get('/admin/pending-applications');
+            setPendingApps(res.data);
+        } catch (err) {
+            console.error("Pending applications loaded failed:", err);
+        }
+    };
+
+    const handleApproveApp = async (appId) => {
+        try {
+            await api.post(`/admin/approve-application/${appId}`);
+            loadPendingApplications();
+        } catch (err) {
+            alert("Başvuru onaylanamadı: " + (err.response?.data?.detail || err.message));
+        }
+    };
+
+    const handleRejectApp = async (appId) => {
+        if (!window.confirm("Bu başvuruyu reddetmek istediğinize emin misiniz?")) return;
+        try {
+            await api.post(`/admin/reject-application/${appId}`);
+            loadPendingApplications();
+        } catch (err) {
+            alert("Başvuru reddedilemedi: " + (err.response?.data?.detail || err.message));
+        }
+    };
+
     useEffect(() => {
         const loadDashboardData = async () => {
             setLoading(true);
@@ -45,7 +74,6 @@ export const AdminDashboard = () => {
             try {
                 const siteRes = await api.get('/admin/site');
                 setSiteInfo(siteRes.data);
-                // console.log("ADMIN SITE RESPONSE:", siteRes.data);
                 siteLoaded = true;
             } catch (err) {
                 console.error("Site bilgisi yüklenemedi:", err);
@@ -54,7 +82,6 @@ export const AdminDashboard = () => {
             try {
                 const statsRes = await api.get('/admin/stats');
                 const s = statsRes.data;
-                // console.log("ADMIN STATS RESPONSE:", s);
                 setStats({
                     totalResidents: s.total_residents ?? 0,
                     totalBuildings: s.total_buildings ?? 0,
@@ -80,6 +107,8 @@ export const AdminDashboard = () => {
                 });
             }
 
+            await loadPendingApplications();
+
             if (!siteLoaded && !statsLoaded) {
                 setError('Dashboard verileri yüklenemedi');
             }
@@ -100,6 +129,28 @@ export const AdminDashboard = () => {
                     padding: '0.75rem 1rem', borderRadius: '6px', marginBottom: '1rem',
                     fontSize: '0.875rem', fontWeight: 500
                 }}>{error}</div>
+            )}
+
+            {/* Pending Admin Applications Banner */}
+            {pendingApps.length > 0 && (
+                <Card title={`🔔 Bekleyen Yönetici Başvuruları (${pendingApps.length})`} className="mb-6" style={{ borderColor: 'var(--warning)', borderLeft: '4px solid var(--warning)' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        {pendingApps.map((app) => (
+                            <div key={app.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', backgroundColor: '#fffbeb', borderRadius: '6px', border: '1px solid #fef3c7' }}>
+                                <div>
+                                    <p style={{ margin: 0, fontWeight: 600 }}>{app.full_name} ({app.email})</p>
+                                    <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                        🏢 {app.site_name} - {app.city}, {app.address}
+                                    </p>
+                                </div>
+                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                    <button onClick={() => handleApproveApp(app.id)} style={{ backgroundColor: 'var(--success)', color: 'white', border: 'none', padding: '0.4rem 0.8rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}>Onayla</button>
+                                    <button onClick={() => handleRejectApp(app.id)} style={{ backgroundColor: 'var(--danger)', color: 'white', border: 'none', padding: '0.4rem 0.8rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}>Reddet</button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </Card>
             )}
 
             {/* Site & Admin Info */}
@@ -208,7 +259,14 @@ export const AdminDashboard = () => {
             </div>
 
             <h2 className="mb-4">AI Haftalık Analiz ve Çözüm Önerileri</h2>
-            <Card className="mb-6" style={{ backgroundColor: '#f0fdf4', borderColor: '#bbf7d0' }}>
+            <Card 
+                className="interactive-card mb-6" 
+                style={{ backgroundColor: '#f0fdf4', borderColor: '#bbf7d0', cursor: 'pointer' }}
+                onClick={() => handleCardClick('/admin/ai-insights')}
+                onKeyDown={(e) => handleKeyDown(e, '/admin/ai-insights')}
+                role="button"
+                tabIndex={0}
+            >
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
                     <div style={{ fontSize: '2rem' }}>🤖</div>
                     <div style={{ flex: 1 }}>

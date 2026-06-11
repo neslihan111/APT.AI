@@ -386,3 +386,63 @@ def get_site_residents(db: Session = Depends(get_db), current_admin: User = Depe
         return query.all()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Sakinler yüklenirken hata: {str(e)}")
+
+
+# ============================================================
+# PENDING ADMIN APPLICATIONS
+# ============================================================
+
+@router.get("/pending-applications")
+def get_pending_applications(db: Session = Depends(get_db), current_admin: User = Depends(get_current_admin)):
+    """Get all pending admin (manager) applications."""
+    try:
+        pending_users = db.query(User).filter(User.role == "pending_admin").all()
+        return [
+            {
+                "id": u.id,
+                "full_name": u.full_name,
+                "email": u.email,
+                "phone": u.phone,
+                "created_at": u.created_at,
+                "site_name": u.site.name if u.site else None,
+                "city": u.site.city if u.site else None,
+                "address": u.site.address if u.site else None,
+            }
+            for u in pending_users
+        ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Başvurular yüklenirken hata: {str(e)}")
+
+
+@router.post("/approve-application/{user_id}")
+def approve_application(user_id: int, db: Session = Depends(get_db), current_admin: User = Depends(get_current_admin)):
+    """Approve a pending admin application."""
+    try:
+        user = db.query(User).filter(User.id == user_id, User.role == "pending_admin").first()
+        if not user:
+            raise HTTPException(status_code=404, detail="Başvuru bulunamadı")
+        user.role = "admin"
+        db.commit()
+        return {"message": "Başvuru onaylandı. Yönetici hesabı aktif hale getirildi."}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Onaylama sırasında hata: {str(e)}")
+
+
+@router.post("/reject-application/{user_id}")
+def reject_application(user_id: int, db: Session = Depends(get_db), current_admin: User = Depends(get_current_admin)):
+    """Reject a pending admin application and delete it."""
+    try:
+        user = db.query(User).filter(User.id == user_id, User.role == "pending_admin").first()
+        if not user:
+            raise HTTPException(status_code=404, detail="Başvuru bulunamadı")
+        
+        site = user.site
+        db.delete(user)
+        if site:
+            db.delete(site)
+        db.commit()
+        return {"message": "Başvuru reddedildi ve kayıt silindi."}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Reddetme sırasında hata: {str(e)}")
